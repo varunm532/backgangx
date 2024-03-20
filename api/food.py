@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
 from flask_restful import Resource
-from flask import Blueprint, jsonify 
+from flask import Blueprint, jsonify, request 
 from flask_restful import Api, Resource
 
 food_api = Blueprint('food_api', __name__, url_prefix='/api/food')
