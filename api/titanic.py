@@ -5,6 +5,7 @@ import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 
 titanic_api = Blueprint('titanic_api', __name__, url_prefix='/api/titanic')
@@ -50,7 +51,6 @@ class TitanicAPI(Resource):
         except Exception as e:
             return {'error': str(e)}
 
-
     def post(self):
         try:
             data = request.json
@@ -59,4 +59,43 @@ class TitanicAPI(Resource):
         except Exception as e:
             return jsonify({'error': str(e)})
 
+class FoodAPI(Resource):
+    def __init__(self):
+        self.data = pd.read_csv('filtered_data.csv')
+        # Assuming the column names in 'filtered_data.csv' are 'DateTime', 'Daypart', 'DayType'
+
+        # Preprocessing
+        self.data['DateTime'] = self.data['DateTime'].apply(lambda x: 'Morning' if x < 12 else 'Afternoon')
+        self.data['DayType'] = self.data['DayType'].apply(lambda x: 'Weekend' if x == 'Weekend' else 'Weekday')
+
+        # Encoding categorical variables
+        self.enc = OneHotEncoder(drop='first')
+        self.enc.fit(self.data[['DateTime', 'DayType']])
+        encoded_features = self.enc.transform(self.data[['DateTime', 'DayType']]).toarray()
+        self.encoded_cols = self.enc.get_feature_names_out(['DateTime', 'DayType'])
+        self.data[self.encoded_cols] = encoded_features
+
+        # Model training
+        self.rf = RandomForestClassifier(n_estimators=100, random_state=42)
+        X = self.data.drop(['Items', 'DateTime', 'DateTime', 'DayType'], axis=1)
+        y = self.data['Items']
+        self.rf.fit(X, y)
+
+    def predict_food_item(self, data):
+        try:
+            time_of_day = data['TimeOfDay']  # Update key to match frontend
+            day_of_week = data['DayOfWeek']  # Update key to match frontend
+            time = data['time']
+
+            # Encoding input data
+            encoded_data = self.enc.transform([[time_of_day, day_of_week]]).toarray()
+            input_features = np.hstack((time, encoded_data))
+            
+            # Predicting food item
+            predicted_item = self.rf.predict([input_features])[0]
+            return {'Predicted Food Item': predicted_item}
+        except Exception as e:
+            return {'error': str(e)}
+
 api.add_resource(TitanicAPI, '/predict')
+api.add_resource(FoodAPI, '/food')
