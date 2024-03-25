@@ -71,7 +71,7 @@ class food:
         y = self.data[self.target]  # Target variable
         
         # Train a logistic regression model
-        self.model = LogisticRegression(max_iter=1000)
+        self.model = LogisticRegression(max_iter=400)
         self.model.fit(X, y)
         
         # Train a decision tree classifier
