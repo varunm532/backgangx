@@ -51,7 +51,7 @@ import seaborn as sns
 
 class food:
     _instance = None
-    
+    """ _init_(self): creates changable instrances and defines variables used for prediction through self.featues and defines target variable to predict through self.target"""
     def __init__(self):
         self.model = None
         self.dt = None
@@ -60,7 +60,7 @@ class food:
         self.data = pd.read_csv('filtered_data.csv')
         
     def _clean(self):
-        # Convert categorical variables to binary
+        """_clean(self) Converts data from the csv file into more readable form for ml. In this case, it reads the DayPart colunm and converts """
         self.data['DayPart'] = self.data['DayPart'].apply(lambda x: 1 if x == 'Morning' else 0)
         self.data['DayType'] = self.data['DayType'].apply(lambda x: 1 if x == 'Weekend' else 0)
         self.data['Hour'] = pd.to_datetime(self.data['Time'], format='%H:%M:%S').dt.hour
@@ -71,7 +71,7 @@ class food:
         y = self.data[self.target]  # Target variable
         
         # Train a logistic regression model
-        self.model = LogisticRegression(max_iter=400)
+        self.model = LogisticRegression(max_iter=1000)
         self.model.fit(X, y)
         
         # Train a decision tree classifier
@@ -88,7 +88,7 @@ class food:
         return cls._instance
     
     def predict(self, payload):
-        """Predict the item based on the given features."""
+        """Predict the item based on the given features. It is taken from the json input and is cleaned to match previous code so it can be used to predict"""
         # Convert input to DataFrame
         payload_df = pd.DataFrame(payload, index=[0])
         # Convert categorical variables to binary
