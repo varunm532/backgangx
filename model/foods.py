@@ -51,7 +51,7 @@ import seaborn as sns
 
 class food:
     _instance = None
-    """ _init_(self): creates changable instrances and defines variables used for prediction through self.featues and defines target variable to predict through self.target"""
+    """ _init_(self): creates changeable instances and defines variables used for prediction through self.features and defines target variable to predict through self.target"""
     def __init__(self):
         self.model = None
         self.dt = None
@@ -60,7 +60,7 @@ class food:
         self.data = pd.read_csv('filtered_data.csv')
         
     def _clean(self):
-        """_clean(self) Converts data from the csv file into more readable form for ml. In this case, it reads the DayPart colunm and converts """
+        """_clean(self) Converts data from the csv file into more readable form for ml. In this case, it reads the DayPart column and converts """
         self.data['DayPart'] = self.data['DayPart'].apply(lambda x: 1 if x == 'Morning' else 0)
         self.data['DayType'] = self.data['DayType'].apply(lambda x: 1 if x == 'Weekend' else 0)
         self.data['Hour'] = pd.to_datetime(self.data['Time'], format='%H:%M:%S').dt.hour
