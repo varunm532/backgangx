@@ -24,7 +24,7 @@ class PredictItem(Resource):
             payload = request.get_json()
             print(payload)
             foodModel = food.get_instance()
-            # Predict the survival probability of the passenger
+            # Predict the item purchased from bakery
             response = foodModel.predict(payload)
             print(response)
             
