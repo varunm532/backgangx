@@ -21,6 +21,7 @@ from api.bakery import bakery_api
 from model.users import initUsers
 from model.players import initPlayers
 from model.foods import initfood 
+from model.bakeries import initbakery
 
 # setup App pages
 from projects.projects import app_projects # Blueprint directory import projects definition
@@ -68,6 +69,7 @@ def generate_data():
     initUsers()
     initPlayers()
     initfood()
+    initbakery()
 
 # Register the custom command group with the Flask application
 app.cli.add_command(custom_cli)
