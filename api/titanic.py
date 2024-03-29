@@ -61,3 +61,4 @@ class TitanicAPI(Resource):
             return jsonify({'error': str(e)})
 
 api.add_resource(TitanicAPI, '/predict')
+# test
