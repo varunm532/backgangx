@@ -80,14 +80,17 @@ class User(db.Model):
     _dob = db.Column(db.Date)
     _hashmap = db.Column(db.JSON, unique=False, nullable=True)
     _role = db.Column(db.String(20), default="User", nullable=False)
+    _stockmoney = db.Column(db.Integer, unique=False, nullable=False)
+
 
     # Defines a relationship between User record and Notes table, one-to-many (one user to many notes)
     posts = db.relationship("Post", cascade='all, delete', backref='users', lazy=True)
 
     # constructor of a User object, initializes the instance variables within object (self)
-    def __init__(self, name, uid, password="123qwerty", dob=date.today(), hashmap={}, role="User"):
+    def __init__(self, name, uid, stockmoney, password="123qwerty", dob=date.today(), hashmap={}, role="User"):
         self._name = name    # variables with self prefix become part of the object, 
         self._uid = uid
+        self._stockmoney = stockmoney
         self.set_password(password)
         self._dob = dob
         self._hashmap = hashmap
@@ -117,6 +120,14 @@ class User(db.Model):
     def is_uid(self, uid):
         return self._uid == uid
     
+    @property
+    def stockmoney(self):
+        return self._stockmoney
+    
+    # a setter function, allows name to be updated after initial object creation
+    @stockmoney.setter
+    def stockmoney(self, stockmoney):
+        self._stockmoney = stockmoney
     @property
     def password(self):
         return self._password[0:10] + "..." # because of security only show 1st characters
@@ -191,6 +202,7 @@ class User(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "stockmoney": self.stockmoney,
             "uid": self.uid,
             "dob": self.dob,
             "age": self.age,
@@ -200,12 +212,14 @@ class User(db.Model):
 
     # CRUD update: updates user name, password, phone
     # returns self
-    def update(self, name="", uid="", password=""):
+    def update(self, name="", uid="", password="", stockmoney=""):
         """only updates values with length"""
         if len(name) > 0:
             self.name = name
         if len(uid) > 0:
             self.uid = uid
+        if stockmoney == '':
+            self.stockmoney = stockmoney
         if len(password) > 0:
             self.set_password(password)
         db.session.commit()
@@ -228,10 +242,10 @@ def initUsers():
         """Create database and tables"""
         db.create_all()
         """Tester data for table"""
-        u1 = User(name='Thomas Edison', uid='toby', password='123toby', dob=date(1847, 2, 11), hashmap={"job": "inventor", "company": "GE"}, role="Admin")
-        u2 = User(name='Nicholas Tesla', uid='niko', password='123niko', dob=date(1856, 7, 10), hashmap={"job": "inventor", "company": "Tesla"})
-        u3 = User(name='Alexander Graham Bell', uid='lex', hashmap={"job": "inventor", "company": "ATT"})
-        u4 = User(name='Grace Hopper', uid='hop', password='123hop', dob=date(1906, 12, 9), hashmap={"job": "inventor", "company": "Navy"})
+        u1 = User(name='Thomas Edison', uid='toby', password='123toby', stockmoney='1000',dob=date(1847, 2, 11), hashmap={"job": "inventor", "company": "GE"}, role="Admin")
+        u2 = User(name='Nicholas Tesla', uid='niko', password='123niko',stockmoney='1000', dob=date(1856, 7, 10), hashmap={"job": "inventor", "company": "Tesla"})
+        u3 = User(name='Alexander Graham Bell', uid='lex',stockmoney='1000', hashmap={"job": "inventor", "company": "ATT"})
+        u4 = User(name='Grace Hopper', uid='hop', password='123hop',stockmoney='1000', dob=date(1906, 12, 9), hashmap={"job": "inventor", "company": "Navy"})
         users = [u1, u2, u3, u4]
 
         """Builds sample user/note(s) data"""
@@ -247,4 +261,215 @@ def initUsers():
                 '''fails with bad or duplicate data'''
                 db.session.remove()
                 print(f"Records exist, duplicate email, or error: {user.uid}")
+class Stock_Transactions(db.Model):
+    __tablename__ = 'stock_transactions'
+   
+    # define the stock schema with "vars" from object
+    id = db.Column(db.Integer, primary_key=True)
+    _uid = db.Column(db.String(255), unique=False, nullable=False)
+    _symbol = db.Column(db.String(255),unique=False,nullable=False)
+    _transaction_type = db.Column(db.String(255),unique=False,nullable=False)
+    _quantity = db.Column(db.String(255),unique=False,nullable=False)
+    _transaction_amount = db.Column(db.Integer, nullable=False)
+    # constructor of a User object, initializes the instance variables within object (self)
+
+    def __init__(self,uid,symbol,transaction_type,quantity,transaction_amount):
+        self._uid = uid
+        self._symbol = symbol
+        self._transaction_type = transaction_type
+        self._quantity = quantity
+        self._transaction_amount = transaction_amount
+    
+    # uid
+    @property
+    def uid(self):
+        return self._uid
+    
+    @uid.setter
+    def uid(self,uid):
+        self._uid = uid
+        
+    # symbol
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @symbol.setter
+    def symbol(self,symbol):
+        self._symbol = symbol
+        
+    # transaction type
+    @property
+    def transaction_type(self):
+        return self._transaction_type
+    
+    @transaction_type.setter
+    def transaction_type(self,transaction_type):
+        self._transaction_type = transaction_type
+        
+    #quantity
+    @property
+    def quantity(self):
+        return self._quantity
+    
+    @quantity.setter
+    def quantity(self,quantity):
+        self._quantity = quantity
+        
+    #transaction amount
+    @property
+    def transaction_amount(self):
+        return self._transaction_amount
+    
+    @transaction_amount.setter
+    def transaction_amount(self,transaction_amount):
+        self._transaction_amount = transaction_amount
+        
+        
+     # output content using str(object) in human readable form, uses getter
+    # output content using json dumps, this is ready for API response
+    def __str__(self):
+        return json.dumps(self.read())
+    
+    # CRUD create/add a new record to the table
+    # returns self or None on error
+    def create(self):
+        try:
+            # creates a person object from User(db.Model) class, passes initializers
+            db.session.add(self)  # add prepares to persist person object to Users table
+            db.session.commit()  # SqlAlchemy "unit of work pattern" requires a manual commit
+            return self
+        except IntegrityError:
+            db.session.remove()
+            return None
+        
+    
+    # CRUD update: updates user name, password, phone
+    # returns self
+
+    def update(self,uid="",symbol="",transaction_type="",quantity="",transaction_amount=""):
+        """only updates values with length"""
+        if len(uid) > 0:
+            self.uid = uid
+        if len(symbol) > 0:
+            self.symbol = symbol
+        if len(transaction_type) > 0:
+            self.transaction_type = transaction_type
+        if len(quantity) > 0:
+            self.quantity = quantity
+        if len(transaction_amount) > 0:
+            self.transaction_amount = transaction_amount           
+        db.session.commit()
+        return self
+    
+    # CRUD read converts self to dictionary
+    # returns dictionary
+    def read(self):
+        return {
+            "id": self.id,
+            "uid": self.uid,
+            "symbol": self.symbol,
+            "transaction_type": self.transaction_type,
+            "quantity": self.quantity,
+            "transaction_amount": self.transaction_amount
+        }
+
+class Stocks(db.Model):
+    _tablename_ = 'stocks'
+    
+    # define the stock schema with "vars" from object
+    id = db.Column(db.Integer, primary_key=True)
+    _symbol = db.Column(db.String(255),unique=False,nullable=False)
+    _company = db.Column(db.String(255),unique=False,nullable=False)
+    _quantity = db.Column(db.Integer,unique=False,nullable=False)
+    _sheesh = db.Column(db.Integer,unique=False,nullable=False)
+    
+    # constructor of a User object, initializes the instance variables within object (self)
+    def __init__(self,symbol,company,quantity,sheesh):
+        self._symbol = symbol
+        self._company = company
+        self._quantity = quantity
+        self._sheesh = sheesh
+# symbol
+    @property
+    def symbol(self):
+        return self._symbol
+    
+    @symbol.setter
+    def symbol(self,symbol):
+        self._symbol = symbol
+#company
+    @property
+    def company(self):
+        return self._company
+    
+    @company.setter
+    def company(self,company):
+        self._company = company
+#quantity
+    @property
+    def quantity(self):
+        return self._quantity
+    
+    @quantity.setter
+    def quantity(self,quantity):
+        self._quantity = quantity
+
+#cost
+    @property
+    def sheesh(self):
+        return self._sheesh
+    
+    @sheesh.setter
+    def sheesh(self,sheesh):
+        self._sheesh = sheesh
+    
+    # output content using str(object) in human readable form, uses getter
+    # output content using json dumps, this is ready for API response
+    def __str__(self):
+        return json.dumps(self.read())
+    
+    # CRUD create/add a new record to the table
+    # returns self or None on error
+    def create(self):
+        try:
+            # creates a person object from User(db.Model) class, passes initializers
+            db.session.add(self)  # add prepares to persist person object to Users table
+            db.session.commit()  # SqlAlchemy "unit of work pattern" requires a manual commit
+            return self
+        except IntegrityError:
+            db.session.remove()
+            return None
+        
+     # CRUD update: updates user name, password, phone
+    # returns self
+    def update(self,symbol="",company="",quantity=None):
+        """only updates values with length"""
+        if len(symbol) > 0:
+            self.symbol = symbol
+        #if sheesh > 0:
+           # self.sheesh = sheesh
+        if len(company) > 0:
+            self.company = company
+        if quantity is not None:
+            self.quantity = quantity
+        
+        db.session.commit()
+        return self
+    
+    # CRUD read converts self to dictionary
+    # returns dictionary
+    def read(self):
+        return {
+            "id": self.id,
+            "symbol": self.symbol,
+            "company": self.company,
+            "quantity": self.quantity,
+            "sheesh": self.sheesh,
+        }
+    # Builds working data for testing
+    def initUsers():
+        with app.app_context():
+            """Create database and tables"""
+            db.create_all()
             
